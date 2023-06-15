@@ -41,6 +41,7 @@ class Description(models.Model):
     
 class Metrics(models.Model):
     vulnerability = models.OneToOneField(Vulnerability, on_delete=models.CASCADE, related_name='metrics')
+    base_severity = models.CharField(max_length=10, choices=VULNERABILITY_LEVEL_CHOICES)
     def __str__(self):
         return str(self.vulnerability)
     
