@@ -1,3 +1,5 @@
+
+import requests
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth import login, logout, authenticate
@@ -5,8 +7,10 @@ from django.contrib.auth.models import User
 from django.db import IntegrityError
 from django.utils import timezone
 from django.contrib.auth.decorators import login_required
+from decouple import config
 
-
+from .forms import FiltersForm
+from .forms import VulnerabilityForm
 
 def home(request):
     return render(request, 'home.html')
@@ -31,4 +35,43 @@ def signup(request):
 
 
 def vulnerabilities(request):
-    return render(request, 'vulnerabilities.html')
+    if request.method == 'GET':
+         if 'state' in request.GET and request.GET['state'] == 'Fixeadas':
+             return render(request, 'vulnerabilities.html', {'form': FiltersForm})
+         else:
+            api_vulnerabilities = config('API_VULNERABILITIES')
+            try:
+               response = requests.get(api_vulnerabilities)
+               severity = request.GET.get('severity')
+               if severity and severity != 'ALL':
+                   params = {'cvssV2Severity': request.GET.get('severity')}
+                   response =  requests.get(api_vulnerabilities, params=params)
+               if response.status_code == 200:
+                   data = response.json()
+                   return render(request, 'vulnerabilities.html', {'vulnerabilities': data['vulnerabilities'], 'form': FiltersForm})
+               else:
+                   return render(request, 'vulnerabilities.html', {'error': 'Error en la solicitud'})
+            except requests.exceptions.RequestException as e:
+                return render(request, 'vulnerabilities.html', {'error': str(e)})
+         
+    
+def register_vulnerabilities(request):
+    return render(request, 'create_vulnerability.html', {'form': VulnerabilityForm})
+        
+
+def signout(request):
+    logout(request)
+    return redirect('home')
+
+
+def signin(request):
+    if request.method == 'GET':
+        return render(request, 'signin.html', {"form": AuthenticationForm})
+    else:
+        user = authenticate(
+            request, username=request.POST['username'], password=request.POST['password'])
+        if user is None:
+            return render(request, 'signin.html', {"form": AuthenticationForm, "error": "Username or password is incorrect."})
+
+        login(request, user)
+        return redirect('vulnerabilities')
