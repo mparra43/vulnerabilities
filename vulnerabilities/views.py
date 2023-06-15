@@ -9,8 +9,8 @@ from django.utils import timezone
 from django.contrib.auth.decorators import login_required
 from decouple import config
 
-from .forms import FiltersForm
-from .forms import VulnerabilityForm
+from .forms import FiltersForm, VulnerabilityForm, DescriptionForm
+
 
 def home(request):
     return render(request, 'home.html')
@@ -75,3 +75,20 @@ def signin(request):
 
         login(request, user)
         return redirect('vulnerabilities')
+
+
+def create_vulnerability(request):
+    if request.method == 'POST':
+        form = VulnerabilityForm(request.POST)
+        if form.is_valid():
+            vulnerability = form.save() 
+            description_form = DescriptionForm(request.POST)
+            if description_form.is_valid():
+                description = description_form.save(commit=False)
+                description.vulnerability = vulnerability  
+                description.save()  
+            return redirect('vulnerability_detail', pk=vulnerability.pk)
+    else:
+        form = VulnerabilityForm()
+        description_form = DescriptionForm()
+    return render(request, 'create_vulnerability.html', {'form': form, 'description_form': description_form})
