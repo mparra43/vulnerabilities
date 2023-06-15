@@ -11,3 +11,8 @@ class VulnerabilityForm(ModelForm):
     class Meta:
         model =  Vulnerability
         fields = ['id','source_identifier','published']   
+
+class DescriptionForm(ModelForm):
+    class Meta:
+        model = Description
+        fields = ['vulnerability', 'lang', 'value']
