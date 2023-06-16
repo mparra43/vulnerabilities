@@ -3,7 +3,7 @@
 El objetivo de la aplicación es gestionar la seguridad de los diferentes sistemas que se encuentran desplegados en la infraestructura Cloud mediante el
 cruce de información con los CVEs del NIST con los reportes que se encuentran de manera local
 
-#iniciar sesión 
+## iniciar sesión 
 ![image](https://github.com/mparra43/vulnerabilities/assets/66500440/97afdbe1-021f-436c-8f99-2b30499583c5)
 #visualización de todos los registros 
 ![image](https://github.com/mparra43/vulnerabilities/assets/66500440/4dd95061-c7d0-458f-a0cb-fcac92df49ab)
@@ -23,14 +23,14 @@ cruce de información con los CVEs del NIST con los reportes que se encuentran d
 ![image](https://github.com/mparra43/vulnerabilities/assets/66500440/e3103975-9034-46fe-adab-fe92476940fd)
 
 
- #Requisitos previos
+ ## Requisitos previos
  Asegúrate de tener instalados los siguientes requisitos previos antes de ejecutar la aplicación:
  
- #Instalación
+ ## Instalación
  
  1. Clona el repositorio de la aplicación en tu máquina local
 
-#Ejecución
+## Ejecución
 ```bash
  2. crear archivo .env de acuerdo al ejemplo y agregar la url de la api externa 
  3. docker build -t {{nombre_de_la_imagen}} .
@@ -42,7 +42,7 @@ cruce de información con los CVEs del NIST con los reportes que se encuentran d
 
 ```
 
-#Diagrama de la solución utilizando servicios del Cloud
+## Diagrama de la solución utilizando servicios del Cloud
 ```bash
 
 +-----------------------+
