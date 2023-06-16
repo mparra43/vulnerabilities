@@ -28,4 +28,62 @@ cruce de información con los CVEs del NIST con los reportes que se encuentran d
  
  #Instalación
  
- 1. Clona el repositorio de la aplicación en tu máquina local:
+ 1. Clona el repositorio de la aplicación en tu máquina local
+
+#Ejecución
+ 2. crear archivo .env de acuerdo al ejemplo y agregar la url de la api externa 
+ 3. docker build -t {{nombre_de_la_imagen}} .
+ 4. docker run -p 8080:8080 {{nombre_de_la_imagen}}
+ 5. docker run -d -v $PWD/.env:/app/.env {{nombre_de_la_imagen}}
+ 6. docker run -d -v {{ruta_local}}:{{ruta_contenedor}} -p 8080:8080 {{nombre_de_la_imagen}}
+ 7. docker exect -it {{id_contenerdor }} /bin/sh
+ 8. python manage.py migrate 
+
+
+#Diagrama de la solución utilizando servicios del Cloud
+
++-----------------------+
+|    Cloud Provider     |
++-----------------------+
+         |
+         |
+         v
++-----------------------+
+|   Load Balancer       |
++-----------------------+
+         |
+         |
+         v
++-----------------------+
+|   Auto Scaling Group  |
++-----------------------+
+         |
+         |
+         v
++-----------------------+
+|   Virtual Machines    |
++-----------------------+
+         |
+         |
+         v
++-----------------------+
+|   Database Service    |
++-----------------------+
+         |
+         |
+         v
++-----------------------+
+|   Cloud Storage       |
++-----------------------+
+         |
+         |
+         v
++-----------------------+
+|   Container Service   |
++-----------------------+
+         |
+         |
+         v
++-----------------------+
+|   Application         |
++-----------------------+
