@@ -37,23 +37,32 @@ def signup(request):
 @login_required
 def vulnerabilities(request):
     if request.method == 'GET':
-         print(request.GET)
-         if 'state' in request.GET and request.GET['state'] == 'Fixeada':
-              severity = request.GET.get('severity')
+         api_vulnerabilities = config('API_VULNERABILITIES')
+         severity = request.GET.get('severity')
+         params = {'cvssV2Severity': request.GET.get('severity')}
+         try:
+          response = requests.get(api_vulnerabilities)  
+          vulnerabilities_database = Vulnerability.objects.all().prefetch_related('descriptions', 'metrics')    
+          if 'state' in request.GET and request.GET['state'] == 'Fixeada':
               if severity and severity != 'ALL':
                vulnerabilities = Vulnerability.objects.filter(Q(metrics__base_severity=severity) | Q(metrics__isnull=True)).prefetch_related('descriptions', 'metrics').order_by('-last_modified')
                return render(request, 'vulnerabilities.html', {'vulnerabilities':vulnerabilities, 'form': FiltersForm})           
               else:
-               vulnerabilities = Vulnerability.objects.all().prefetch_related('descriptions', 'metrics')
-               return render(request, 'vulnerabilities.html', {'vulnerabilities':vulnerabilities, 'form': FiltersForm})
-         else:
-            api_vulnerabilities = config('API_VULNERABILITIES')
-            try:
-               response = requests.get(api_vulnerabilities)
-               severity = request.GET.get('severity')
-               vulnerabilities_database = Vulnerability.objects.all().prefetch_related('descriptions', 'metrics')
+               return render(request, 'vulnerabilities.html', {'vulnerabilities':vulnerabilities_database, 'form': FiltersForm})
+          elif 'state' in request.GET and request.GET['state'] == 'Publicadas':
+               if severity and severity != 'ALL': 
+                  response =  requests.get(api_vulnerabilities, params=params)
+                  if response.status_code == 200:
+                       data = response.json()
+                       return render(request, 'vulnerabilities.html', {'vulnerabilities': data['vulnerabilities'], 'form': FiltersForm})
+                  else:
+                      return render(request, 'vulnerabilities.html', {'error': 'Error en la solicitud'})
+               else: 
+                   data = response.json()
+                   return render(request, 'vulnerabilities.html', {'vulnerabilities': data['vulnerabilities'], 'form': FiltersForm}) 
+                   
+          else:
                if severity and severity != 'ALL':
-                   params = {'cvssV2Severity': request.GET.get('severity')}
                    response =  requests.get(api_vulnerabilities, params=params)
                    vulnerabilities_database = Vulnerability.objects.filter(Q(metrics__base_severity=severity) | Q(metrics__isnull=True)).prefetch_related('descriptions', 'metrics').order_by('-last_modified')
                if response.status_code == 200:
@@ -63,8 +72,8 @@ def vulnerabilities(request):
                    return render(request, 'vulnerabilities.html', {'vulnerabilities': vulnerabilities_all, 'form': FiltersForm})
                else:
                    return render(request, 'vulnerabilities.html', {'error': 'Error en la solicitud'})
-            except requests.exceptions.RequestException as e:
-                return render(request, 'vulnerabilities.html', {'error': str(e)})
+         except requests.exceptions.RequestException as e:
+            return render(request, 'vulnerabilities.html', {'error': str(e)})
          
 @login_required   
 def register_vulnerabilities(request):

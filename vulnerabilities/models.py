@@ -6,6 +6,7 @@ class Filters(models.Model):
     STATE_CHOICES = (
         ('Todas', 'Todas'),
         ('Fixeada', 'Fixeada'),
+        ('Publicadas', 'Publicadas'),
     )
 
     SEVERITY_CHOICES = (
