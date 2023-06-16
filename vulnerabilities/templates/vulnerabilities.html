@@ -2,7 +2,7 @@
 <div class="container mt-5">
   <h1>Vulnerabilidades</h1>
 
-  <form class="d-flex justify-content-between mt-4 mb-4"  action="/vulnerabilities/" method="GET">
+  <form class="d-flex justify-content-between mt-4 mb-4" action="/vulnerabilities/" method="GET">
     <div class="form-row"></div>
     {% csrf_token %}
 
@@ -10,7 +10,7 @@
 
     <div class="col-md-2 mt-6">
       <button type="submit" class="btn btn-primary mx-auto">Buscar</button>
-  </div>
+    </div>
   </form>
 
   <table class="table table-bordered">
@@ -25,25 +25,57 @@
     <tbody>
       {% for vulnerability in vulnerabilities %}
       <tr>
-        <th scope="row">{{vulnerability.cve.id}}</th>
-        <td>{{vulnerability.cve.sourceIdentifier}}</td>
-        <td>{{vulnerability.cve.vulnStatus}}</td>
+        <th scope="row">
+          {% if vulnerability.cve %}
+          {{ vulnerability.cve.id }}
+          {% else %}
+          {{ vulnerability.id }}
+          {% endif %}
+        </th>
+        <td>
+          {% if vulnerability.cve %}
+          {{vulnerability.cve.sourceIdentifier}}
+          {% else %}
+          {{ vulnerability.source_identifier }}
+          {% endif %}
+        </td>
+        <td>
+          {% if vulnerability.cve %}
+          {{vulnerability.cve.vulnStatus}}
+          {% else %}
+          {{ vulnerability.vuln_status }}
+          {% endif %}
+        </td>
         <td>
           <ul>
+            {% if vulnerability.cve %}
             {% for description in vulnerability.cve.descriptions %}
             <li>{{description.value}}</li>
             {% endfor %}
+            {% else %}
+            {% for description in vulnerability.descriptions.all %}
+            <li>{{ description.value }}</li>
+            {% endfor %}
+            {% endif %}
           </ul>
         </td>
         <td>
-          {% for metric in vulnerability.cve.metrics.cvssMetricV2 %}
-          <span>{{metric.baseSeverity}}</span>
-          {% endfor %}
+          <ul>
+            {% if vulnerability.cve %}
+            {% for metric in vulnerability.cve.metrics.cvssMetricV2 %}
+            <span>{{metric.baseSeverity}}</span>
+            {% endfor %}
+            {% else %}
+            {% for metric in vulnerability.metrics.all %}
+            <li>{{ metric.base_severity }}</li>
+            {% endfor %}
+            {% endif %}
+          </ul>
         </td>
-
       </tr>
+      {% endfor %}
     </tbody>
-    {% endfor %}
+
   </table>
 </div>
 {% endblock %}

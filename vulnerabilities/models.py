@@ -5,7 +5,7 @@ from django.contrib.auth.models import User
 class Filters(models.Model):
     STATE_CHOICES = (
         ('Todas', 'Todas'),
-        ('Fixeadas', 'Fixeadas'),
+        ('Fixeada', 'Fixeada'),
     )
 
     SEVERITY_CHOICES = (
@@ -17,38 +17,43 @@ class Filters(models.Model):
 
     
     state = models.CharField(max_length=20, choices=STATE_CHOICES, default='Todas')
-    severity = models.CharField(max_length=20, choices=SEVERITY_CHOICES, default='LOW')
+    severity = models.CharField(max_length=20, choices=SEVERITY_CHOICES, default='ALL')
   
     def __str__(self):
         return self
 
 
 class Vulnerability(models.Model):
-    id = models.CharField(max_length=20, primary_key=True)
+    id = models.AutoField(primary_key=True)
     source_identifier = models.CharField(max_length=50)
     published = models.DateTimeField()
-    last_modified = models.DateTimeField()
-    vuln_status = models.CharField(max_length=20, default='fixeada')
+    last_modified = models.DateTimeField(auto_now=True)
+    vuln_status = models.CharField(max_length=20, default='Fixeada')
     def __str__(self):
-       return self
+        return f"Vulnerability: ID={self.id}, Source={self.source_identifier}, Status={self.vuln_status}, Descriptions={self.descriptions}, Metrics={self.metrics}"
 
 class Description(models.Model):
+    LANG_CHOICES = [
+        ('Inglés ', 'en'),
+        ('Español', 'es'),
+        
+    ]
     vulnerability = models.ForeignKey(Vulnerability, on_delete=models.CASCADE, related_name='descriptions')
-    lang = models.CharField(max_length=10)
+    lang = models.CharField(max_length=10, choices=LANG_CHOICES, default='en')
     value = models.TextField()
     def __str__(self):
         return self.value
     
 class Metrics(models.Model):
      VULNERABILITY_LEVEL_CHOICES = [
-        ('LOW', 'Low'),
-        ('MEDIUM', 'Medium'),
-        ('HIGH', 'High'),
+        ('LOW', 'LOW'),
+        ('MEDIUM', 'MEDIUM'),
+        ('HIGH', 'HIGH'),
     ]
-    vulnerability = models.OneToOneField(Vulnerability, on_delete=models.CASCADE, related_name='metrics')
-    base_severity = models.CharField(max_length=10, choices=VULNERABILITY_LEVEL_CHOICES)
-    def __str__(self):
-        return str(self.vulnerability)
+     vulnerability = models.ForeignKey(Vulnerability, related_name='metrics', on_delete=models.CASCADE)
+     base_severity = models.CharField(max_length=10, choices=VULNERABILITY_LEVEL_CHOICES, default='LOW')
+     def __str__(self):
+      return str(self.vulnerability)
     
 class Weakness(models.Model):
     vulnerability = models.ForeignKey(Vulnerability, on_delete=models.CASCADE, related_name='weaknesses')
@@ -60,9 +65,4 @@ class Configuration(models.Model):
     def __str__(self):
         return str(self.vulnerability)
     
-class Reference(models.Model):
-    vulnerability = models.ForeignKey(Vulnerability, on_delete=models.CASCADE, related_name='references')
-    url = models.URLField()
-    source = models.CharField(max_length=50)
-    def __str__(self):
-         return self.url
+

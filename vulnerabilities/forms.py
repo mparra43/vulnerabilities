@@ -1,6 +1,6 @@
 from django.forms import ModelForm
-from .models import Filters
-from .models import Vulnerability
+from .models import Filters, Description, Vulnerability, Metrics
+
 
 class FiltersForm(ModelForm):
     class Meta:
@@ -10,9 +10,14 @@ class FiltersForm(ModelForm):
 class VulnerabilityForm(ModelForm):
     class Meta:
         model =  Vulnerability
-        fields = ['id','source_identifier','published']   
+        fields = ['source_identifier','published']   
 
 class DescriptionForm(ModelForm):
     class Meta:
         model = Description
-        fields = ['vulnerability', 'lang', 'value']
+        fields = [ 'lang', 'value']
+
+class MetricForm(ModelForm):
+    class Meta:
+        model = Metrics
+        fields = [ 'base_severity' ]

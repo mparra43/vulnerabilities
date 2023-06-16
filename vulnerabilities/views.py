@@ -8,8 +8,9 @@ from django.db import IntegrityError
 from django.utils import timezone
 from django.contrib.auth.decorators import login_required
 from decouple import config
-
-from .forms import FiltersForm, VulnerabilityForm, DescriptionForm
+from .forms import FiltersForm, VulnerabilityForm, DescriptionForm, MetricForm
+from .models import Vulnerability
+from django.db.models import  Q
 
 
 def home(request):
@@ -33,32 +34,64 @@ def signup(request):
 
         return render(request, 'signup.html', {"form": UserCreationForm, "error": "Passwords did not match."})
 
-
+@login_required
 def vulnerabilities(request):
     if request.method == 'GET':
-         if 'state' in request.GET and request.GET['state'] == 'Fixeadas':
-             return render(request, 'vulnerabilities.html', {'form': FiltersForm})
+         print(request.GET)
+         if 'state' in request.GET and request.GET['state'] == 'Fixeada':
+              severity = request.GET.get('severity')
+              if severity and severity != 'ALL':
+               vulnerabilities = Vulnerability.objects.filter(Q(metrics__base_severity=severity) | Q(metrics__isnull=True)).prefetch_related('descriptions', 'metrics').order_by('-last_modified')
+               return render(request, 'vulnerabilities.html', {'vulnerabilities':vulnerabilities, 'form': FiltersForm})           
+              else:
+               vulnerabilities = Vulnerability.objects.all().prefetch_related('descriptions', 'metrics')
+               return render(request, 'vulnerabilities.html', {'vulnerabilities':vulnerabilities, 'form': FiltersForm})
          else:
             api_vulnerabilities = config('API_VULNERABILITIES')
             try:
                response = requests.get(api_vulnerabilities)
                severity = request.GET.get('severity')
+               vulnerabilities_database = Vulnerability.objects.all().prefetch_related('descriptions', 'metrics')
                if severity and severity != 'ALL':
                    params = {'cvssV2Severity': request.GET.get('severity')}
                    response =  requests.get(api_vulnerabilities, params=params)
+                   vulnerabilities_database = Vulnerability.objects.filter(Q(metrics__base_severity=severity) | Q(metrics__isnull=True)).prefetch_related('descriptions', 'metrics').order_by('-last_modified')
                if response.status_code == 200:
                    data = response.json()
-                   return render(request, 'vulnerabilities.html', {'vulnerabilities': data['vulnerabilities'], 'form': FiltersForm})
+                   vulnerabilities_database_List = list(vulnerabilities_database)
+                   vulnerabilities_all = vulnerabilities_database_List + data['vulnerabilities']
+                   return render(request, 'vulnerabilities.html', {'vulnerabilities': vulnerabilities_all, 'form': FiltersForm})
                else:
                    return render(request, 'vulnerabilities.html', {'error': 'Error en la solicitud'})
             except requests.exceptions.RequestException as e:
                 return render(request, 'vulnerabilities.html', {'error': str(e)})
          
-    
+@login_required   
 def register_vulnerabilities(request):
-    return render(request, 'create_vulnerability.html', {'form': VulnerabilityForm})
-        
+     if request.method == 'POST':
+       try:
+            form = VulnerabilityForm(request.POST)
+            if form.is_valid():
+             vulnerability = form.save() 
+             description_form = DescriptionForm(request.POST)
+             if description_form.is_valid():
+                description = description_form.save(commit=False)
+                description.vulnerability = vulnerability  
+                description.save() 
+                severity = MetricForm(request.POST)
+                if severity.is_valid():
+                    severity = severity.save(commit=False)
+                    severity.vulnerability = vulnerability  
+                    severity.save() 
+                    return redirect('vulnerabilities',)
+       except ValueError:
+            return render(request, 'create_task.html', {"form": VulnerabilityForm, "error": "Error creating task."})
 
+     else:   
+       return render(request, 'create_vulnerability.html', {'form': VulnerabilityForm, 'description_form': DescriptionForm, 'severity':MetricForm})
+     
+
+@login_required
 def signout(request):
     logout(request)
     return redirect('home')
@@ -77,18 +110,4 @@ def signin(request):
         return redirect('vulnerabilities')
 
 
-def create_vulnerability(request):
-    if request.method == 'POST':
-        form = VulnerabilityForm(request.POST)
-        if form.is_valid():
-            vulnerability = form.save() 
-            description_form = DescriptionForm(request.POST)
-            if description_form.is_valid():
-                description = description_form.save(commit=False)
-                description.vulnerability = vulnerability  
-                description.save()  
-            return redirect('vulnerability_detail', pk=vulnerability.pk)
-    else:
-        form = VulnerabilityForm()
-        description_form = DescriptionForm()
-    return render(request, 'create_vulnerability.html', {'form': form, 'description_form': description_form})
+
